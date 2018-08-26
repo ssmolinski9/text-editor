@@ -85,12 +85,26 @@ public class Editor extends JPanel implements Scrollable {
 
     @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-        return 0;
+        switch (orientation) {
+            case SwingConstants.VERTICAL:
+                return visibleRect.height / 10;
+            case SwingConstants.HORIZONTAL:
+                return visibleRect.width / 10;
+            default:
+                throw new IllegalArgumentException("Invalid orientation: " + orientation);
+        }
     }
 
     @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-        return 0;
+        switch (orientation) {
+            case SwingConstants.VERTICAL:
+                return visibleRect.height;
+            case SwingConstants.HORIZONTAL:
+                return visibleRect.width;
+            default:
+                throw new IllegalArgumentException("Invalid orientation: " + orientation);
+        }
     }
 
     @Override
@@ -100,6 +114,6 @@ public class Editor extends JPanel implements Scrollable {
 
     @Override
     public boolean getScrollableTracksViewportHeight() {
-        return true;
+        return false;
     }
 }
