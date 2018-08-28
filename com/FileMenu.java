@@ -1,14 +1,13 @@
 package com;
 
-import javax.swing.JFileChooser;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JScrollPane;
+import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.*;
 
 public class FileMenu extends JMenu {
-    public FileMenu() {
+    public FileMenu(Window wnd) {
         super("File");
 
         add(new JMenuItem("New"));
@@ -17,84 +16,106 @@ public class FileMenu extends JMenu {
         add(new JMenuItem("Save as"));
         add(new JMenuItem("Exit"));
 
-        getItem(0).addActionListener(e -> { newFile(); });
-        getItem(1).addActionListener(e -> { openFile(); });
-        getItem(2).addActionListener(e -> { saveFile(); });
-        getItem(3).addActionListener(e -> { saveAsFile(); });
-        getItem(4).addActionListener(e -> { System.exit(0); });
+        getItem(0).addActionListener(e -> { newFile(wnd); });
+        getItem(1).addActionListener(e -> { openFile(wnd); });
+        getItem(2).addActionListener(e -> { saveFile(wnd); });
+        getItem(3).addActionListener(e -> { saveAsFile(wnd); });
+        getItem(4).addActionListener(e -> { setCustomCloseOperation(wnd); });
+
+        getItem(0).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+        getItem(1).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+        getItem(2).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
     }
 
-    private void newFile() {
-        ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).setTextFile(null);
-        Editor.window.setTitle("Text Editor - nowy plik");
-        ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).clearText();
+    private void newFile(Window wnd) {
+        ((EditorPanel)wnd.getContentPane()).setTextFile(null);
+        ((EditorPanel)wnd.getContentPane()).clearText();
+
+        wnd.setTitle("Text Editor - new file");
     }
 
-    private void openFile() {
+    private void openFile(Window wnd) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("*.txt", "txt"));
         fileChooser.setAcceptAllFileFilterUsed(false);
 
         int returnValue = fileChooser.showOpenDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).clearText();
-            ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).setTextFile(fileChooser.getSelectedFile());
+            ((EditorPanel)(wnd.getContentPane())).clearText();
+            ((EditorPanel)(wnd.getContentPane())).setTextFile(fileChooser.getSelectedFile());
 
-            Editor.window.setTitle("Text Editor - " + ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile().getName());
+            wnd.setTitle("Text Editor - " +  ((EditorPanel)(wnd.getContentPane())).getTextFile().getName());
 
-            try (BufferedReader br = new BufferedReader(new FileReader(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile()))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(((EditorPanel)(wnd.getContentPane())).getTextFile()))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).appendText(line);
-                    ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).appendText("\n");
+                    ((EditorPanel)(wnd.getContentPane())).appendText(line);
+                    ((EditorPanel)(wnd.getContentPane())).appendText("\n");
                 }
             } catch (IOException ignored) {}
         }
     }
 
-    private void saveFile() {
-        if(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile() != null) {
+    public void saveFile(Window wnd) {
+        if(((EditorPanel)(wnd.getContentPane())).getTextFile() != null) {
             try {
-                BufferedWriter bw = new BufferedWriter(new FileWriter(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile()));
-                ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextArea().write(bw);
+                BufferedWriter bw = new BufferedWriter(new FileWriter(((EditorPanel)(wnd.getContentPane())).getTextFile()));
+                ((EditorPanel)(wnd.getContentPane())).getTextArea().write(bw);
                 bw.close();
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
         } else {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setApproveButtonText("Save");
-            int returnValue = fileChooser.showOpenDialog(null);
-            if (returnValue == JFileChooser.APPROVE_OPTION && fileChooser.getSelectedFile().getName().endsWith(".txt")) {
-                ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).setTextFile(new File(fileChooser.getSelectedFile().getAbsolutePath()));
-                try {
-                    BufferedWriter bw = new BufferedWriter(new FileWriter(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile()));
-                    ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextArea().write(bw);
-                    bw.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-
-                Editor.window.setTitle("Text Editor - " + ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile().getName());
-            }
+            saveAsFile(wnd);
         }
+
+        ((EditorPanel)(wnd.getContentPane())).unsavedChanges = false;
     }
 
-    private void saveAsFile() {
+    private void saveAsFile(Window wnd) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setApproveButtonText("Save");
         int returnValue = fileChooser.showOpenDialog(null);
-        if (returnValue == JFileChooser.APPROVE_OPTION && fileChooser.getSelectedFile().getName().endsWith(".txt")) {
-            ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).setTextFile(new File(fileChooser.getSelectedFile().getAbsolutePath()));
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            if(fileChooser.getSelectedFile().getName().endsWith(".txt"))
+                ((EditorPanel)(wnd.getContentPane())).setTextFile(new File(fileChooser.getSelectedFile().getAbsolutePath()));
+            else
+                ((EditorPanel)(wnd.getContentPane())).setTextFile(new File(fileChooser.getSelectedFile().getAbsolutePath() + ".txt"));
+
             try {
-                BufferedWriter bw = new BufferedWriter(new FileWriter(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile()));
-                ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextArea().write(bw);
+                BufferedWriter bw = new BufferedWriter(new FileWriter(((EditorPanel)(wnd.getContentPane())).getTextFile()));
+                ((EditorPanel)(wnd.getContentPane())).getTextArea().write(bw);
                 bw.close();
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
 
-            Editor.window.setTitle("Text Editor - " + ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextFile().getName());
+            ((EditorPanel)(wnd.getContentPane())).unsavedChanges = false;
+            wnd.setTitle("Text Editor - " + (((EditorPanel)(wnd.getContentPane())).getTextFile().getName()));
+        }
+    }
+
+    private void setCustomCloseOperation(Window wnd) {
+        Object[] options = {"Yes",
+                "No",
+                "Cancel"};
+
+        int n = ((EditorPanel)wnd.getContentPane()).unsavedChanges ? JOptionPane.showOptionDialog(wnd,
+                "Do you want to save changes?",
+                "Text Editor",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[2]) : 1;
+
+        if(n == 0)  {
+            saveFile(wnd);
+            wnd.dispose();
+            System.exit(0);
+        } else if(n == 1) {
+            wnd.dispose();
+            System.exit(0);
         }
     }
 }
