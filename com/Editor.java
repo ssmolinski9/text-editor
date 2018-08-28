@@ -1,11 +1,21 @@
 package com;
 
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 public class Editor extends JPanel implements Scrollable {
 
@@ -28,7 +38,59 @@ public class Editor extends JPanel implements Scrollable {
         textArea.setWrapStyleWord(true);
         textArea.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 
+        setPreferredSize(window.getSize());
         add(textArea);
+
+        textArea.addPropertyChangeListener("text", evt -> {
+            if(textArea.getPreferredSize().height > window.getSize().height)
+                setSize(textArea.getPreferredSize());
+
+            System.out.println("Test");
+        });
+
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                if(textArea.getPreferredSize().height >= window.getSize().height - textArea.getFontMetrics(textArea.getFont()).getHeight()) {
+                    setPreferredSize(textArea.getPreferredSize());
+                } else {
+                    setPreferredSize(window.getSize());
+                }
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                if(textArea.getPreferredSize().height >= window.getSize().height - textArea.getFontMetrics(textArea.getFont()).getHeight()) {
+                    setPreferredSize(textArea.getPreferredSize());
+                } else {
+                    setPreferredSize(window.getSize());
+                }
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent arg0) {
+                if(textArea.getPreferredSize().height >= window.getSize().height - textArea.getFontMetrics(textArea.getFont()).getHeight()) {
+                    setPreferredSize(textArea.getPreferredSize());
+                } else {
+                    setPreferredSize(window.getSize());
+                }
+            }
+        });
+
+        textArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    if(textArea.getPreferredSize().height >= window.getSize().height - textArea.getFontMetrics(textArea.getFont()).getHeight()) {
+                        try {
+                            textArea.setCaretPosition(textArea.getLineStartOffset(textArea.getLineCount() - 1) - 1);
+                        } catch (BadLocationException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }
+            }
+        });
     }
 
     public void clearText() {
@@ -65,6 +127,17 @@ public class Editor extends JPanel implements Scrollable {
         window.getJMenuBar().add(new FileMenu());
         window.getJMenuBar().add(new EditMenu());
         window.getJMenuBar().add(new FormatMenu());
+
+        window.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent componentEvent) {
+
+                if(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextArea().getPreferredSize().height >= window.getSize().height - ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextArea().getFontMetrics(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextArea().getFont()).getHeight()) {
+                    ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).setPreferredSize(((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).getTextArea().getPreferredSize());
+                } else {
+                    ((Editor)((JScrollPane)Editor.window.getContentPane()).getViewport().getView()).setPreferredSize(window.getSize());
+                }
+            }
+        });
 
         String imagePath = "/res/icon.png";
         InputStream imgStream = Editor.class.getResourceAsStream(imagePath);
