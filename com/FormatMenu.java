@@ -19,6 +19,7 @@ public class FormatMenu extends JMenu {
         if (result == JFontChooser.OK_OPTION)
         {
             ((EditorPanel)(wnd.getContentPane())).getTextArea().setFont(fontChooser.getSelectedFont());
+            EditorPanel.globalFont = fontChooser.getSelectedFont();
         }
     }
 }

@@ -8,11 +8,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Properties;
 
 public class Window extends JFrame {
 
     private static final int WIDTH = 500;
     private static final int HEIGHT = 500;
+
 
     public Window(String[] args) {
         super();
@@ -27,6 +29,7 @@ public class Window extends JFrame {
         setCustomCloseOperation(this);
         setContentPane(new EditorPanel());
         createMenu();
+        createAppdataFolder();
 
         loadFileFromArgs(args);
         setVisible(true);
@@ -96,6 +99,32 @@ public class Window extends JFrame {
                         options,
                         options[2]) : 1;
 
+                Properties prop = new Properties();
+                OutputStream output = null;
+
+                try {
+                    output = new FileOutputStream(System.getenv("APPDATA") + File.separator + "text-editor" + File.separator + "config.properties");
+
+                    // set the properties value
+                    prop.setProperty("font_size", EditorPanel.globalFont.getSize()+"");
+                    prop.setProperty("font_name", EditorPanel.globalFont.getFontName()+"");
+                    prop.setProperty("font_style", EditorPanel.globalFont.getStyle()+"");
+
+                    // save properties to project root folder
+                    prop.store(output, null);
+
+                } catch (IOException io) {
+                    io.printStackTrace();
+                } finally {
+                    if (output != null) {
+                        try {
+                            output.close();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+
                 if(n == 0)  {
                     getJMenuBar().getMenu(0).getItem(2).doClick();
                     parent.dispose();
@@ -106,5 +135,9 @@ public class Window extends JFrame {
                 }
             }
         });
+    }
+
+    private void createAppdataFolder() {
+        new File(System.getenv("APPDATA") + File.separator + "text-editor").mkdirs();
     }
 }

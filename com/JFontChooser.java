@@ -35,6 +35,7 @@ import java.io.InputStream;
  *   }
  * <pre>
  **/
+@SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
 public class JFontChooser extends JComponent
 {
     // class variables
@@ -407,6 +408,7 @@ public class JFontChooser extends JComponent
         return dialogResultValue;
     }
 
+    @SuppressWarnings("PointlessBooleanExpression")
     protected class ListSelectionHandler implements ListSelectionListener
     {
         private JTextComponent textComponent;
